@@ -25,8 +25,9 @@ export default async function handler(req, res) {
       const systemMsg = req.body.messages.find(m => m.role === 'system');
       const systemInstruction = systemMsg ? { parts: [{ text: systemMsg.content }] } : undefined;
 
-      // FIXED: Using gemini-2.5-flash
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=\${process.env.GEMINI_API_KEY}`, {
+      // FIXED: Using gemini-2.5-flash and trimming the API key to prevent hidden spaces
+      const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : '';
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=\${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
