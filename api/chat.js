@@ -13,26 +13,52 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Determine which provider to use based on Environment Variables
     const isGemini = process.env.GEMINI_API_KEY ? true : false;
-    
-    const targetUrl = isGemini 
-      ? "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
-      : "https://openrouter.ai/api/v1/chat/completions";
-      
-    const apiKey = isGemini 
-      ? process.env.GEMINI_API_KEY 
-      : process.env.OPENROUTER_API_KEY;
 
-    const response = await fetch(targetUrl, {
+    if (isGemini) {
+      // Natively convert OpenAI payload to Gemini payload
+      const geminiMessages = req.body.messages.map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }]
+      }));
+      // Extract system prompt if present
+      const systemMsg = req.body.messages.find(m => m.role === 'system');
+      const systemInstruction = systemMsg ? { parts: [{ text: systemMsg.content }] } : undefined;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=\${process.env.GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: systemInstruction,
+          contents: geminiMessages.filter(m => m.role !== 'system')
+        })
+      });
+
+      const data = await response.json();
+      if (data.error) {
+         return res.status(500).json({ error: data.error.message });
+      }
+
+      // Convert back to OpenAI format for Flutter
+      return res.status(200).json({
+        choices: [{
+          message: {
+            role: 'assistant',
+            content: data.candidates[0].content.parts[0].text
+          }
+        }]
+      });
+    }
+
+    // OpenRouter logic
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": `Bearer \${process.env.OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
         "HTTP-Referer": "https://jamb-cbt-app.com",
         "X-Title": "JAMB CBT Tutor"
       },
-      // Pass the exact payload Flutter sent us
       body: JSON.stringify(req.body)
     });
 
