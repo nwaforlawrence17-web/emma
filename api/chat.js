@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   try {
     const apiKey = process.env.OPENROUTER_API_KEY ? process.env.OPENROUTER_API_KEY.trim() : '';
     const requestBody = req.body;
-    const model = requestBody.model || "nvidia/nemotron-3-nano-omni-30b-a3b";
+    const model = requestBody.model || "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free";
 
     const response = await fetch(`https://openrouter.ai/api/v1/chat/completions`, {
       method: 'POST',
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
         'X-Title': 'JAMB CBT AI Tutor'
       },
       body: JSON.stringify({
-        model: "nvidia/nemotron-3-nano-omni-30b-a3b",
+        model: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
         messages: requestBody.messages,
         stream: true
       })
