@@ -17,11 +17,11 @@ export default async function handler(req, res) {
   res.setHeader('Connection', 'keep-alive');
 
   try {
-    const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : '';
+    const apiKey = process.env.OPENROUTER_API_KEY ? process.env.OPENROUTER_API_KEY.trim() : '';
     const requestBody = req.body;
-    const model = requestBody.model || "gemini-1.5-flash-lite";
+    const model = requestBody.model || "nvidia/nemotron-3-nano-omni-30b-a3b";
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`, {
+    const response = await fetch(`https://openrouter.ai/api/v1/chat/completions`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
         'X-Title': 'JAMB CBT AI Tutor'
       },
       body: JSON.stringify({
-        model: "gemini-1.5-flash-lite",
+        model: "nvidia/nemotron-3-nano-omni-30b-a3b",
         messages: requestBody.messages,
         stream: true
       })
