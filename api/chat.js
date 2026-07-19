@@ -17,20 +17,19 @@ export default async function handler(req, res) {
   res.setHeader('Connection', 'keep-alive');
 
   try {
-    const apiKey = process.env.OPENROUTER_API_KEY ? process.env.OPENROUTER_API_KEY.trim() : '';
+    const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : '';
     const requestBody = req.body;
-    const model = requestBody.model || "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free";
+    // gemini-1.5-flash supports audio, video, and text for free (up to 15 RPM / 1M TPM)
+    const model = requestBody.model || "gemini-1.5-flash";
 
-    const response = await fetch(`https://openrouter.ai/api/v1/chat/completions`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': 'https://jamb-cbt.app',
-        'X-Title': 'JAMB CBT AI Tutor'
+        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+        model: model,
         messages: requestBody.messages,
         stream: true
       })
