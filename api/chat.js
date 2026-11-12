@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     'Access-Control-Allow-Headers',
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
   );
-  
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -17,27 +17,40 @@ export default async function handler(req, res) {
   res.setHeader('Connection', 'keep-alive');
 
   try {
-    const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : '';
-    const requestBody = req.body;
-    // gemini-1.5-flash supports audio, video, and text for free (up to 15 RPM / 1M TPM)
-    const model = requestBody.model || "gemini-1.5-flash";
+    const apiKey = (process.env.OPENROUTER_API_KEY || '').trim();
+    if (!apiKey) {
+      return res.status(500).json({ error: "Missing OPENROUTER_API_KEY environment variable." });
+    }
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`, {
+    const requestBody = req.body || {};
+    let model = requestBody.model || "nex-agi/nex-n2.5-mini";
+    if (model === "nex-agi/nex-n2-mini") {
+      model = "nex-agi/nex-n2.5-mini";
+    }
+
+    const payload = {
+      model: model,
+      messages: requestBody.messages || [],
+      stream: true,
+      max_tokens: requestBody.max_tokens || 600,
+      reasoning: { effort: requestBody.reasoning_effort || "none" }
+    };
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': 'https://jamb-cbt.app',
+        'X-Title': 'JAMB CBT AI Tutor'
       },
-      body: JSON.stringify({
-        model: model,
-        messages: requestBody.messages,
-        stream: true
-      })
+      body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      return res.status(500).json({ error: errorData.error?.message || 'Error' });
+      const errorText = await response.text();
+      console.error("OpenRouter API Error:", response.status, errorText);
+      return res.status(response.status).json({ error: errorText });
     }
 
     for await (const chunk of response.body) {
