@@ -16,9 +16,9 @@ export default async function handler(req, res) {
     const apiKey = (process.env.OPENROUTER_API_KEY || fallbackKey).trim();
 
     const requestBody = req.body || {};
-    let model = requestBody.model || "nex-agi/nex-n2.5-mini";
-    if (model === "nex-agi/nex-n2-mini") {
-      model = "nex-agi/nex-n2.5-mini";
+    let model = requestBody.model || "google/gemma-4-26b-a4b-it";
+    if (model === "nex-agi/nex-n2-mini" || model === "nex-agi/nex-n2.5-mini") {
+      model = "google/gemma-4-26b-a4b-it";
     }
 
     const payload = {
